@@ -248,15 +248,29 @@
 		 */
 		function _dragableTimeline() {
 
-			var selected = null, x_pos = 0, x_elem = 0;
+			var selected = null, x_pos_m = 0, x_pos = 0, x_elem = 0, firstX =0;
 
-			// Will be called when user starts dragging an element
+			// Will be called when user starts dragging an element on mobile device
+			function _drag_init_mobile(firstX,elem) {
+				selected = elem;
+				x_elem = selected.offsetLeft;
+			}
+
+			// Will be called when user dragging an element on mobile device
+			function _move_elem_mobile(e) {
+				x_pos_m = e.originalEvent.touches[0].pageX;
+				if (selected !== null) {
+					selected.style.left = (x_elem + x_pos_m - firstX ) + 'px';
+				}
+			}
+
+			// Will be called when user starts dragging an element on desktop
 			function _drag_init(elem) {
 				selected = elem;
 				x_elem = x_pos - selected.offsetLeft;
 			}
 
-			// Will be called when user dragging an element
+			// Will be called when user dragging an element on desktop
 			function _move_elem(e) {
 				x_pos = document.all ? window.event.clientX : e.pageX;
 				if (selected !== null) {
@@ -288,9 +302,15 @@
 				}
 			}
 
-			// Bind the functions...
+			//Bind the functions...
 			$el.first().on('mousedown', function() {
 				_drag_init($el.find('.'+ options.className +'-timeline')[0]);
+				return false;
+			});
+
+			$el.first().on('touchstart', function(e) {
+				firstX = e.touches[0].pageX;
+				_drag_init_mobile(firstX,$el.find('.'+ options.className +'-timeline')[0]);
 				return false;
 			});
 
@@ -298,9 +318,19 @@
 				_move_elem(e);
 			});
 
+			$(document).on('touchmove.timeliny', function(e) {
+				_move_elem_mobile(e);
+			});
+
+			$(document).on('touchend.timeliny', function() {
+				_stop_move();
+			});
+
 			$(document).on('mouseup.timeliny', function() {
 				_stop_move();
 			});
+
+
 		}
 
 		/**
